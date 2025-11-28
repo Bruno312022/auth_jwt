@@ -3,7 +3,7 @@ const sequelize = require("./Config/database");
 const userRoutes = require("./Routes/userRoutes");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const User = require("./Models/User"); 
+const User = require("./Models/User");
 require("dotenv").config({ path: "./.env" });
 
 const port = 3001;
@@ -53,14 +53,43 @@ app.post("/login", async (req, res) => {
     }
 });
 
+
+const createAdminUser = async () => {
+    try {
+        const adminExists = await User.findOne({ where: { username: "admin" } });
+
+        if (!adminExists) {
+            const hashedPassword = await bcrypt.hash(process.env.SENHA_ADMIN, 10);
+            await User.create({
+                username: "admin",
+                password: hashedPassword,
+                role: "admin"
+            });
+            console.log("Admin user created.");
+        } else {
+            console.log("Admin already exists.");
+        }
+    } catch (err) {
+        console.error("Error creating admin user:", err);
+    }
+};
+
+
 // Database sync and server start
 sequelize.sync({ alter: true })
     .then(() => {
         console.log("Database connected");
-        app.listen(port, () => {
-            console.log(`Server running on: http://localhost:${port}`);
-        });
+        createAdminUser()
+            .then(() => {
+                app.listen(port, () => {
+                    console.log(`Server running on: http://localhost:${port}`);
+                });
+            })
+            .catch(err => {
+                console.error("Error creating admin user:", err);
+            });
     })
     .catch((error) => {
         console.error("Database connection error:", error);
     });
+
