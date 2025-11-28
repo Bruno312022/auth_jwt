@@ -25,3 +25,5 @@ const User = sequelize.define("User", {
         defaultValue: 'common'
     }
 })
+
+module.exports = User;
